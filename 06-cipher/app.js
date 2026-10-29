@@ -1,5 +1,5 @@
 import { encode, decode } from './cipher.js?v=2';
-import { emphasisSegments, markdownEmphasis, cipherEmphasis, escapeForDiscord } from './format.js?v=4';
+import { emphasisSegments, markdownEmphasis, cipherEmphasis, escapeForDiscord, discordMarkdown } from './format.js?v=5';
 
 const input = document.querySelector('#input');
 const output = document.querySelector('#output');
@@ -12,6 +12,7 @@ const copyIcon = copy.querySelector('svg').innerHTML;
 const discordPreferenceKey = '06-cipher.discord-copy';
 let direction = 'decode';
 let outputValue = '';
+let outputMarkdownSegments = null;
 let copyTimer;
 let revision = 0;
 
@@ -35,9 +36,11 @@ function update() {
     const result = markdownEmphasis(decode(input.value));
     outputValue = result.text;
     segments = result.segments;
+    outputMarkdownSegments = result.segments;
   } else {
     outputValue = encode(cipherEmphasis(input.value));
     segments = emphasisSegments(outputValue);
+    outputMarkdownSegments = null;
   }
   const fragment = document.createDocumentFragment();
   for (const { text, bold } of segments) {
@@ -85,7 +88,12 @@ clear.addEventListener('click', () => {
 });
 
 copy.addEventListener('click', async () => {
-  const text = discordCopy.checked ? escapeForDiscord(outputValue) : outputValue;
+  let text = outputValue;
+  if (discordCopy.checked) {
+    text = outputMarkdownSegments === null
+      ? escapeForDiscord(outputValue)
+      : discordMarkdown(outputMarkdownSegments);
+  }
   if (!text) return;
   const copiedRevision = revision;
   try {

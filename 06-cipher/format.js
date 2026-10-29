@@ -44,6 +44,14 @@ export function escapeForDiscord(value) {
   return String(value).replace(/\*/g, '\\*');
 }
 
+/** Escape literal stars while preserving the generated bold delimiters. */
+export function discordMarkdown(segments) {
+  return segments.map(({ text, bold }) => {
+    const escaped = escapeForDiscord(text);
+    return bold ? `**${escaped}**` : escaped;
+  }).join('');
+}
+
 /** Serialize matched emphasis as Markdown while keeping literal stars visible. */
 export function markdownEmphasis(value) {
   const source = String(value);

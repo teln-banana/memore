@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { emphasisSegments, escapeForDiscord, markdownEmphasis, cipherEmphasis } from '../format.js';
+import { emphasisSegments, escapeForDiscord, markdownEmphasis, cipherEmphasis, discordMarkdown } from '../format.js';
 import { encode, decode } from '../cipher.js';
 
 test('matched parentheses emphasize their contents while preserving all text', () => {
@@ -140,6 +140,27 @@ test('Markdown emphasis round-trips through the numeric cipher and Discord escap
   const coded = encode(cipherEmphasis(natural));
   assert.equal(coded, '前(11*1*2*3)後');
   assert.equal(markdownEmphasis(decode(coded)).text, natural);
-  assert.equal(escapeForDiscord(markdownEmphasis(decode('(11)')).text), '\\*\\*あ\\*\\*');
+  assert.equal(discordMarkdown(markdownEmphasis(decode('(11)')).segments), '**あ**');
   assert.equal(markdownEmphasis(decode('*12345\n***12345\n0612')).text, '1くと\n12345\n06い');
+});
+
+test('Discord copying preserves generated bold markers and escapes only literal stars', () => {
+  const result = markdownEmphasis('前(あ*い)後*');
+  assert.equal(result.text, '前**あ*い**後*');
+  assert.equal(discordMarkdown(result.segments), '前**あ\\*い**後\\*');
+  assert.equal(discordMarkdown(markdownEmphasis('（あ（い）う）').segments), '**あいう**');
+  assert.equal(discordMarkdown(markdownEmphasis('(あ) (い)').segments), '**あ** **い**');
+  assert.equal(discordMarkdown([]), '');
+});
+
+test('literal double and triple stars are escaped even beside genuine emphasis', () => {
+  const result = markdownEmphasis('**raw** (あ) ***1');
+  assert.equal(discordMarkdown(result.segments), '\\*\\*raw\\*\\* **あ** \\*\\*\\*1');
+  assert.equal(discordMarkdown(markdownEmphasis(decode('***abc**def**')).segments), 'abc\\*\\*def\\*\\*');
+});
+
+test('numeric stars inside emphasized text are escaped without altering the wrapper', () => {
+  const result = markdownEmphasis(decode('(11) ***literal*1'));
+  assert.equal(discordMarkdown(result.segments), '**あ** literal\\*1');
+  assert.equal(escapeForDiscord(encode(cipherEmphasis('**あ**1'))), '(11)\\*1');
 });
