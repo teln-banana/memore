@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { emphasisSegments, escapeForDiscord } from '../format.js';
+import { emphasisSegments, escapeForDiscord, markdownEmphasis, cipherEmphasis } from '../format.js';
+import { encode, decode } from '../cipher.js';
 
 test('matched parentheses emphasize their contents while preserving all text', () => {
   assert.deepEqual(emphasisSegments('あ(いう)え'), [
@@ -76,4 +77,69 @@ test('existing backslashes are preserved and one additional backslash precedes e
   }
   const input = String.raw`a\b\*1\\***2`;
   assert.equal(escapeForDiscord(input), String.raw`a\b\\*1\\\*\*\*2`);
+});
+
+test('parenthesized decoded text becomes Markdown with separate bold display spans', () => {
+  assert.deepEqual(markdownEmphasis('あ(いう)え'), {
+    text: 'あ**いう**え',
+    segments: [{ text: 'あ', bold: false }, { text: 'いう', bold: true }, { text: 'え', bold: false }],
+  });
+  assert.deepEqual(markdownEmphasis('（123）'), {
+    text: '**123**', segments: [{ text: '123', bold: true }],
+  });
+  assert.deepEqual(markdownEmphasis(''), { text: '', segments: [] });
+});
+
+test('nested and adjacent emphasis flattens without leaving extra star runs', () => {
+  assert.deepEqual(markdownEmphasis('a(い（う）え)(お)b'), {
+    text: 'a**いうえお**b',
+    segments: [{ text: 'a', bold: false }, { text: 'いうえお', bold: true }, { text: 'b', bold: false }],
+  });
+  assert.equal(markdownEmphasis('('.repeat(20000) + 'あ' + ')'.repeat(20000)).text, '**あ**');
+});
+
+test('empty and unmatched parentheses remain literal while matched inner pairs convert', () => {
+  assert.deepEqual(markdownEmphasis('()（）(あ'), {
+    text: '()（）(あ', segments: [{ text: '()（）(あ', bold: false }],
+  });
+  assert.deepEqual(markdownEmphasis('(あ（い）'), {
+    text: '(あ**い**', segments: [{ text: '(あ', bold: false }, { text: 'い', bold: true }],
+  });
+  assert.equal(markdownEmphasis('(あ（い)う）え').text, '(あ**い)う**え');
+});
+
+test('literal Markdown-looking stars remain visible and unbold in decoded output', () => {
+  assert.deepEqual(markdownEmphasis('**あ**\r\n(い) *1'), {
+    text: '**あ**\r\n**い** *1',
+    segments: [{ text: '**あ**\r\n', bold: false }, { text: 'い', bold: true }, { text: ' *1', bold: false }],
+  });
+  assert.deepEqual(markdownEmphasis(decode('***abc**def**')), {
+    text: 'abc**def**', segments: [{ text: 'abc**def**', bold: false }],
+  });
+});
+
+test('paired exact double-star delimiters convert back to cipher parentheses', () => {
+  assert.equal(cipherEmphasis('あ**いう**え'), 'あ(いう)え');
+  assert.equal(cipherEmphasis('**あ** **い**'), '(あ) (い)');
+  assert.equal(cipherEmphasis('**あ\nい**'), '(あ\nい)');
+  assert.equal(cipherEmphasis('**あ** trailing **'), '(あ) trailing **');
+  assert.equal(cipherEmphasis(''), '');
+});
+
+test('single stars, triple runs, escaped delimiters and unmatched markers stay literal', () => {
+  for (const source of ['*12345', '***12345', '***あ***', '****あ****', '**あ', String.raw`\**あ**`, String.raw`**あ\**`]) {
+    assert.equal(cipherEmphasis(source), source);
+  }
+  assert.equal(cipherEmphasis(String.raw`\\**あ**`), String.raw`\\(あ)`);
+});
+
+test('Markdown emphasis round-trips through the numeric cipher and Discord escaping', () => {
+  assert.equal(markdownEmphasis(decode('(11)')).text, '**あ**');
+  assert.equal(encode(cipherEmphasis('**あ**')), '(11)');
+  const natural = '前**あ123**後';
+  const coded = encode(cipherEmphasis(natural));
+  assert.equal(coded, '前(11*1*2*3)後');
+  assert.equal(markdownEmphasis(decode(coded)).text, natural);
+  assert.equal(escapeForDiscord(markdownEmphasis(decode('(11)')).text), '\\*\\*あ\\*\\*');
+  assert.equal(markdownEmphasis(decode('*12345\n***12345\n0612')).text, '1くと\n12345\n06い');
 });

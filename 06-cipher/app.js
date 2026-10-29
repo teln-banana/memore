@@ -1,5 +1,5 @@
 import { encode, decode } from './cipher.js?v=2';
-import { emphasisSegments, escapeForDiscord } from './format.js?v=3';
+import { emphasisSegments, markdownEmphasis, cipherEmphasis, escapeForDiscord } from './format.js?v=4';
 
 const input = document.querySelector('#input');
 const output = document.querySelector('#output');
@@ -30,9 +30,17 @@ function resetCopy() {
 
 function update() {
   revision += 1;
-  outputValue = direction === 'decode' ? decode(input.value) : encode(input.value);
+  let segments;
+  if (direction === 'decode') {
+    const result = markdownEmphasis(decode(input.value));
+    outputValue = result.text;
+    segments = result.segments;
+  } else {
+    outputValue = encode(cipherEmphasis(input.value));
+    segments = emphasisSegments(outputValue);
+  }
   const fragment = document.createDocumentFragment();
-  for (const { text, bold } of emphasisSegments(outputValue)) {
+  for (const { text, bold } of segments) {
     if (bold) {
       const strong = document.createElement('strong');
       strong.textContent = text;
