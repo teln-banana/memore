@@ -31,9 +31,12 @@ button svg { width: 23px; height: 23px; flex: 0 0 auto; }
 .mobile-output-label { display: none; }
 .input-editor { border-right: 1px solid var(--border); }
 .editor:focus-within { background: #181a1c; }
-textarea { display: block; width: 100%; flex: 1; min-height: 0; border: 0; padding: 23px 24px 10px; resize: none; outline: none; background: transparent; color: var(--text); font-size: 20px; line-height: 1.9; letter-spacing: .015em; overflow-wrap: anywhere; }
+textarea, .output { display: block; width: 100%; flex: 1; min-height: 0; border: 0; padding: 23px 24px 10px; resize: none; outline: none; background: transparent; color: var(--text); font-size: 20px; line-height: 1.9; letter-spacing: .015em; overflow-wrap: anywhere; }
+.output { overflow: auto; white-space: pre-wrap; user-select: text; }
+.output:empty::before { content: attr(data-placeholder); color: var(--muted); pointer-events: none; }
+.output strong { font-weight: 700; }
 textarea::placeholder { color: var(--muted); opacity: 1; }
-textarea::selection { background: #4e5d4c; color: #fff; }
+textarea::selection, .output::selection, .output *::selection { background: #4e5d4c; color: #fff; }
 .editor-actions { display: flex; align-items: center; justify-content: flex-end; padding: 4px 14px 9px; min-height: 58px; }
 .clear { color: #b9bdc2; }
 .copy { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 6px 8px 10px; border-radius: 7px; font-size: 14px; line-height: 1; }
@@ -42,8 +45,13 @@ textarea::selection { background: #4e5d4c; color: #fff; }
 button:disabled { cursor: default; color: var(--muted); }
 button:disabled:hover { background: transparent; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-textarea:focus-visible { box-shadow: inset 0 0 0 1px #7d8b78; }
+textarea:focus-visible, .output:focus-visible { box-shadow: inset 0 0 0 1px #7d8b78; }
 .copy.copied { color: var(--accent); }
+.discord-option { display: flex; align-items: center; gap: 10px; width: fit-content; min-height: 44px; margin-top: 10px; padding: 0 4px; color: var(--muted); font-size: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.discord-option:hover { color: var(--text); }
+.discord-option input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.discord-option input:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.clipboard-fallback { position: fixed; top: 0; left: 0; opacity: 0; pointer-events: none; }
 
 @media (max-width: 620px) {
   .translator { width: calc(100% - 32px); padding-top: 48px; padding-bottom: 32px; }
@@ -55,7 +63,7 @@ textarea:focus-visible { box-shadow: inset 0 0 0 1px #7d8b78; }
   .editors { grid-template-columns: minmax(0, 1fr); border-radius: 12px; }
   .editor { height: 244px; }
   .input-editor { border-right: 0; border-bottom: 1px solid var(--border); }
-  textarea { padding: 18px 18px 8px; font-size: 18px; line-height: 1.8; }
+  textarea, .output { padding: 18px 18px 8px; font-size: 18px; line-height: 1.8; }
   .editor-actions { padding-right: 10px; padding-bottom: 6px; }
 }
 

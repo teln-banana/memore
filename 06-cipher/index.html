@@ -8,8 +8,8 @@
     <meta name="color-scheme" content="dark" />
     <title>06暗号</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./style.css" />
-    <script type="module" src="./app.js?v=2"></script>
+    <link rel="stylesheet" href="./style.css?v=3" />
+    <script type="module" src="./app.js?v=3"></script>
   </head>
   <body>
     <main class="translator">
@@ -32,7 +32,7 @@
         </section>
         <section class="editor output-editor" aria-labelledby="output-label">
           <label class="mobile-output-label" for="output" aria-hidden="true">かな</label>
-          <textarea id="output" placeholder="変換結果" spellcheck="false" readonly aria-labelledby="output-label" aria-live="polite" aria-atomic="true"></textarea>
+          <div id="output" class="output" role="textbox" tabindex="0" aria-readonly="true" aria-multiline="true" aria-labelledby="output-label" aria-live="polite" aria-atomic="true" data-placeholder="変換結果"></div>
           <div class="editor-actions">
             <button id="copy" class="copy" type="button" aria-label="変換結果をコピー" disabled>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="1.6" /><path d="M16 8V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h4" /></svg>
@@ -41,6 +41,10 @@
           </div>
         </section>
       </div>
+      <label class="discord-option" for="discord-copy">
+        <input id="discord-copy" type="checkbox" />
+        <span>Discord用にコピー（\*）</span>
+      </label>
     </main>
   </body>
 </html>
