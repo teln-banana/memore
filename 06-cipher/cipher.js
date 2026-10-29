@@ -59,8 +59,8 @@ function normalizeKana(character) {
 
 /**
  * Encode supported kana, preserving all other text. Katakana reads as hiragana.
- * The supplied alphabet defines no escaping: literal digits or punctuation next
- * to encoded kana can overlap code syntax, so arbitrary text cannot round-trip.
+ * Literal digits use the single-character escape. Literal asterisks and voice
+ * marks can still overlap control syntax; no general text escape is specified.
  */
 export function encode(value) {
   const source = String(value);
@@ -74,6 +74,12 @@ export function encode(value) {
     }
 
     const character = source[index];
+    if (isDigit(cipherCharacter(character))) {
+      result += `*${character}`;
+      index += 1;
+      continue;
+    }
+
     if (!isKana(character)) {
       result += character;
       index += 1;
@@ -116,6 +122,21 @@ export function decode(value) {
   let result = '';
 
   for (let index = 0; index < source.length;) {
+    // The line directive takes priority over the single-digit escape.
+    if (source.startsWith('***', index)) {
+      let end = index + 3;
+      while (end < source.length && !/[\r\n\u2028\u2029]/u.test(source[end])) end += 1;
+      result += source.slice(index + 3, end);
+      index = end;
+      continue;
+    }
+
+    if (source[index] === '*' && isDigit(cipherCharacter(source[index + 1]))) {
+      result += source[index + 1];
+      index += 2;
+      continue;
+    }
+
     const start = index;
     const first = cipherCharacter(source[index]);
     const small = first === '.' && isDigit(cipherCharacter(source[index + 1]));

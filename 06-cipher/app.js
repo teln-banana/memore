@@ -1,4 +1,4 @@
-import { encode, decode } from './cipher.js';
+import { encode, decode } from './cipher.js?v=2';
 
 const input = document.querySelector('#input');
 const output = document.querySelector('#output');
